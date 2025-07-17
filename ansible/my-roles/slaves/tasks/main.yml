@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Main task for worker node setup
+- name: Include preflight setup
+  ansible.builtin.include_tasks: preflight.yml
+
+- name: Include kubeadm join logic
+  ansible.builtin.include_tasks: join.yml

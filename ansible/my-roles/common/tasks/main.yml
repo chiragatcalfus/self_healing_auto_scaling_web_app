@@ -1,0 +1,155 @@
+# SPDX-License-Identifier: MIT-0
+---
+# tasks file for common
+- name: Install container runtime dependencies
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+    state: present
+    update_cache: yes
+
+# --- Docker Setup (with aggressive cleanup for legacy key) ---
+- name: Ensure /etc/apt/keyrings exists for Docker
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Add Docker GPG key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+    force: true
+  become: true
+
+- name: Remove old Docker GPG key from trusted.gpg (if it exists)
+  ansible.builtin.shell: |
+    # Find the key ID for Docker (often 0EBFCD88)
+    KEY_ID=$(sudo apt-key list | grep -B 1 "download.docker.com" | head -n 1 | awk '{print $NF}')
+    if [ ! -z "$KEY_ID" ]; then
+      sudo apt-key del $KEY_ID
+    fi
+  args:
+    warn: false # Suppress warning about using shell
+  changed_when: false # This task is for cleanup, not direct change
+  failed_when: false # Don't fail if apt-key list/del fails (e.g., key not found)
+  become: true
+
+- name: Add Docker repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_facts['distribution_release'] }} stable"
+    state: present
+    update_cache: true
+
+- name: Install Docker
+  ansible.builtin.apt:
+    name: docker-ce
+    state: latest
+    update_cache: yes
+
+- name: Enable and start Docker
+  ansible.builtin.systemd:
+    name: docker
+    enabled: yes
+    state: started
+
+- name: Disable swap permanently
+  ansible.builtin.command: swapoff -a
+  changed_when: true
+  become: true
+
+- name: Comment swap entries in fstab
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^([^#].*swap.*)$'
+    replace: '# \1'
+  become: true
+
+# --- FIXED KUBERNETES TASKS ---
+- name: Ensure /etc/apt/keyrings directory exists for Kubernetes
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Remove any pre-existing Kubernetes apt source list files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/apt/sources.list.d/kubernetes.list
+    - /etc/apt/sources.list.d/kubernetes-archive-keyring.list
+  become: true
+
+- name: Remove old Kubernetes GPG keys from apt-key (cleanup)
+  ansible.builtin.shell: |
+    # Remove any old Kubernetes keys
+    for key_id in $(apt-key list | grep -i kubernetes -A 1 -B 1 | grep pub | awk '{print $2}' | cut -d'/' -f2); do
+      if [ ! -z "$key_id" ]; then
+        apt-key del $key_id || true
+      fi
+    done
+  args:
+    warn: false
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Download and add Kubernetes GPG key (correct method)
+  ansible.builtin.shell: |
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  become: true
+
+- name: Set correct permissions on Kubernetes GPG key
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    mode: '0644'
+    owner: root
+    group: root
+  become: true
+
+- name: Add Kubernetes APT repository (official new URL)
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /"
+    filename: kubernetes
+    state: present
+    update_cache: no  # We'll update cache in the next task
+  become: true
+
+- name: Update apt cache after adding Kubernetes repository
+  ansible.builtin.apt:
+    update_cache: yes
+  become: true
+
+- name: Install kubelet, kubeadm and kubectl
+  ansible.builtin.apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+    update_cache: yes
+  become: true
+
+# - name: Update apt cache after adding Install kubelet, kubeadm and kubectl
+#   ansible.builtin.apt:
+#     update_cache: yes
+#   become: true
+
+- name: Hold Kubernetes packages
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+  become: true
