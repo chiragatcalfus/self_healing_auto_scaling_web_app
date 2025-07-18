@@ -77,6 +77,13 @@ resource "aws_security_group" "my_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port   = 6443
+    to_port     = 6443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -92,7 +99,7 @@ resource "aws_security_group" "my_sg" {
 
 resource "aws_instance" "master" {
   ami                    = "ami-021a584b49225376d"
-  instance_type          = "t3.micro"
+  instance_type          = "t3.xlarge"
   subnet_id              = aws_subnet.public_subnet.id
   vpc_security_group_ids = [aws_security_group.my_sg.id]
   key_name               = "ec2-testing-key"
@@ -103,7 +110,7 @@ resource "aws_instance" "master" {
 }
 resource "aws_instance" "slave1" {
   ami                    = "ami-021a584b49225376d"
-  instance_type          = "t3.micro"
+  instance_type          = "t3.xlarge"
   subnet_id              = aws_subnet.public_subnet.id
   vpc_security_group_ids = [aws_security_group.my_sg.id]
   key_name               = "ec2-testing-key"
@@ -114,7 +121,7 @@ resource "aws_instance" "slave1" {
 }
 resource "aws_instance" "slave2" {
   ami                    = "ami-021a584b49225376d"
-  instance_type          = "t3.micro"
+  instance_type          = "t3.xlarge"
   subnet_id              = aws_subnet.public_subnet.id
   vpc_security_group_ids = [aws_security_group.my_sg.id]
   key_name               = "ec2-testing-key"
