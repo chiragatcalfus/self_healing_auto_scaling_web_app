@@ -1,0 +1,15 @@
+auth:
+  postgresPassword: "{{ db_password | default('supersecure') }}"
+  username: "appuser"
+  password: "{{ app_password | default('appsecure') }}"
+  database: "appdb"
+
+primary:
+  persistence:
+    enabled: false  # Set to true if you have PVCs and want data to persist
+
+service:
+  type: ClusterIP
+
+replication:
+  enabled: false

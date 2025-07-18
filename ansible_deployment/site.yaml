@@ -1,0 +1,7 @@
+- name: Deploy 3-tier app on K8s
+  hosts: master
+  become: yes
+  roles:
+    - install-deps
+    - postgres
+    - k8s-deploy

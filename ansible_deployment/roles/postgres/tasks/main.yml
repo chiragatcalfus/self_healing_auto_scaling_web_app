@@ -1,0 +1,20 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for postgres
+- name: Render values.yml from j2 template
+  ansible.builtin.template:
+    src: "templates/values.yaml.j2"
+    dest: "/tmp/postgres-values.yaml"
+
+
+- name: Deploy Bitnami Postgres using values.yaml
+  kubernetes.core.helm:
+    name: my-postgres
+    chart_ref: bitnami/postgresql
+    release_namespace: default
+    create_namespace: true
+    values_files:
+      - "/tmp/postgres-values.yaml"
+  environment: 
+    KUBECONFIG: "/etc/kubernetes/admin.conf"
+
