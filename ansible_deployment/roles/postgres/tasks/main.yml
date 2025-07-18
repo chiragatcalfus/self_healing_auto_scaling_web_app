@@ -6,6 +6,10 @@
     src: "templates/values.yaml.j2"
     dest: "/tmp/postgres-values.yaml"
 
+- name: Add Bitnami Helm repo
+  kubernetes.core.helm_repository:
+    name: bitnami
+    repo_url: https://charts.bitnami.com/bitnami
 
 - name: Deploy Bitnami Postgres using values.yaml
   kubernetes.core.helm:
