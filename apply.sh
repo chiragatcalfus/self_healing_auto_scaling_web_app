@@ -40,3 +40,7 @@ echo "Ansible inventory generated at $inventory_file"
 sleep 10
 cd ../ansible
 ansible-playbook -i inventory.ini playbook.yaml
+
+
+cd ../ansible_deployment
+ansible-playbook -i ../ansible/inventory.ini site.yaml
