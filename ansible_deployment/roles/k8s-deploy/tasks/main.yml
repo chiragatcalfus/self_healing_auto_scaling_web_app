@@ -44,3 +44,10 @@
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
 
+- name: Deploy ingress nginx
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'frontend-ingress.yaml.j2') }}"
+    state: present
+    namespace: default
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
