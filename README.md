@@ -26,13 +26,17 @@ This project automates the deployment of a 3 tier app using the helm on kubernet
    chmod +x apply.sh
    chmod +x destroy.sh
    ```
+4. **Create a .vault_pass.txt with your ansible-vault password in it'
+   ```bash
+   vi .vault_pass.txt
+   ```
 
-4. **Deploy infrastructure and configure servers**
+5. **Deploy infrastructure and configure servers**
    ```bash
    ./apply.sh
    ```
 
-5. **Clean up resources**
+6. **Clean up resources**
    ```bash
    ./destroy.sh
    ```
