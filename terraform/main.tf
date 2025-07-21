@@ -110,7 +110,7 @@ resource "aws_instance" "master" {
 }
 resource "aws_instance" "slave1" {
   ami                    = "ami-021a584b49225376d"
-  instance_type          = "t3.xlarge"
+  instance_type          = "t3.large"
   subnet_id              = aws_subnet.public_subnet.id
   vpc_security_group_ids = [aws_security_group.my_sg.id]
   key_name               = "ec2-testing-key"
@@ -121,7 +121,7 @@ resource "aws_instance" "slave1" {
 }
 resource "aws_instance" "slave2" {
   ami                    = "ami-021a584b49225376d"
-  instance_type          = "t3.xlarge"
+  instance_type          = "t3.large"
   subnet_id              = aws_subnet.public_subnet.id
   vpc_security_group_ids = [aws_security_group.my_sg.id]
   key_name               = "ec2-testing-key"
