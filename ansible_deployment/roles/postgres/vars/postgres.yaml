@@ -1,0 +1,4 @@
+postgresPassword: supersecure
+username: appuser69
+password: apppassword69
+database: appdb

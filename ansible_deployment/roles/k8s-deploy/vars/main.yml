@@ -1,3 +1,8 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # vars file for k8s-deploy
+# In your vars file or inventory
+frontend-service-name: "frontend-service.yaml.j2"  
+frontend-service-port: 80  
+frontend-host: "yourdomain"  
+ingress-class-name: "nginx"  

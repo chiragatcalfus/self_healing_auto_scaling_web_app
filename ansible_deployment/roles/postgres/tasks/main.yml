@@ -1,6 +1,19 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # tasks file for postgres
+
+- name: Load Postgres secrets from Ansible Vault
+  ansible.builtin.include_vars:
+    file: "postgres.yaml"
+    name: pg_secrets
+
+- name: Set Postgres template variables
+  ansible.builtin.set_fact:
+    postgresPassword: "{{ pg_secrets.postgresPassword }}"
+    username: "{{ pg_secrets.username }}"
+    password: "{{ pg_secrets.password }}"
+    database: "{{ pg_secrets.database }}"
+
 - name: Render values.yml from j2 template
   ansible.builtin.template:
     src: "templates/values.yaml.j2"
