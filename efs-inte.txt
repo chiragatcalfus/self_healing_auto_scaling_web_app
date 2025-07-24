@@ -1,0 +1,99 @@
+Combined IFS Role policy for csi driver
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "EFSCSIPermissions",
+            "Effect": "Allow",
+            "Action": [
+                "elasticfilesystem:DescribeAccessPoints",
+                "elasticfilesystem:DescribeFileSystems"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "EFSCSICreateAccessPoint",
+            "Effect": "Allow",
+            "Action": [
+                "elasticfilesystem:CreateAccessPoint",
+                "elasticfilesystem:DeleteAccessPoint"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+
+
+EFS integration with the k8s manual ec2 setup
+
+1. Same VPC
+
+2. EFS provisioner installed on cluster -- CSI Driver
+kubectl apply -k "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/ecr/?ref=release-1.6"
+
+3. Create a AWS EFS access point -- aws console
+aws efs create-access-point \
+    --file-system-id fs-xxxxxxxx \
+    --posix-user Uid=1000,Gid=1000 \
+    --root-directory 'Path=/pgdata,CreationInfo={OwnerUid=1000,OwnerGid=1000,Permissions=750}'
+
+
+4. Create a storage class with the provisioner, provisioning mode, file system installed
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: fs-xxxxxxxx
+  directoryPerms: "700"
+  gidRangeStart: "1000"
+  gidRangeEnd: "2000"
+  basePath: "/"
+
+5. Create a PVC 
+
+6. Update the postgres deployment yaml file
+spec:
+  containers:
+    - name: postgres
+      image: postgres:15
+      ports:
+        - containerPort: 5432
+      env:
+        # existing env vars
+      volumeMounts:
+        - name: efs-storage
+          mountPath: /var/lib/postgresql/data
+  volumes:
+    - name: efs-storage
+      persistentVolumeClaim:
+        claimName: efs-pvc
+
+
+
+EFS integration with the EKS managed service
+
+1. Install EFS CSI driver 
+kubectl apply -k "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/ecr/?ref=release-1.6"
+
+2. Create a IAM policy for the efs csi driver
+
+3. Check the EKS has OIDC provider (associate if not)
+eksctl utils associate-iam-oidc-provider \
+  --region <region> \
+  --cluster <cluster-name> \
+  --approve
+
+4. Create a IAM role for the service account - kubesystem -> efs-csi-controller-sa
+eksctl create iamserviceaccount \
+  --region <region> \
+  --cluster <cluster-name> \
+  --namespace kube-system \
+  --name efs-csi-controller-sa \
+  --attach-policy-arn arn:aws:iam::<account-id>:policy/AmazonEKS_EFS_CSI_Driver_Policy \
+  --approve \
+  --override-existing-serviceaccounts
+
+5. Patch and redeploy the EFS CSI Driver
+# Example patch
+spec:
+  serviceAccountName: efs-csi-controller-sa
+
+6. CReate a storage class and PVC claims
