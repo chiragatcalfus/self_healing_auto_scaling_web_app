@@ -12,6 +12,22 @@
     name: kubernetes
     executable: pip3
 
+# - name: Deploy postgres
+#   kubernetes.core.k8s:
+#     definition: "{{ lookup('template', 'postgres-deployment.yaml.j2') }}"
+#     state: present
+#     namespace: default 
+#   environment:
+#     KUBECONFIG: /etc/kubernetes/admin.conf
+
+# - name: Deploy postgres service
+#   kubernetes.core.k8s:
+#     definition: "{{ lookup('template', 'postgres-service.yaml.j2') }}"
+#     state: present
+#     namespace: default 
+#   environment:
+#     KUBECONFIG: /etc/kubernetes/admin.conf
+
 - name: Deploy backend
   kubernetes.core.k8s:
     definition: "{{ lookup('template', 'backend-deployment.yaml.j2') }}"
@@ -44,10 +60,10 @@
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
 
-- name: Deploy ingress nginx
-  kubernetes.core.k8s:
-    definition: "{{ lookup('template', 'frontend-ingress.yaml.j2') }}"
-    state: present
-    namespace: default
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+# - name: Deploy ingress nginx
+#   kubernetes.core.k8s:
+#     definition: "{{ lookup('template', 'frontend-ingress.yaml.j2') }}"
+#     state: present
+#     namespace: default
+#   environment:
+#     KUBECONFIG: /etc/kubernetes/admin.conf

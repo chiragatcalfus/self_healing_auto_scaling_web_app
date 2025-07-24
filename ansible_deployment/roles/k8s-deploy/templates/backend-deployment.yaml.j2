@@ -13,10 +13,18 @@ spec:
         app: backend
     spec:
       containers:
-      - name: backend
-        image: hashicorp/http-echo
-        env:
-        - name: DATABASE_URL
-          value: "postgres://postgres:supersecure@my-postgres-postgresql.default.svc.cluster.local:5432/postgres"
-        ports:
-        - containerPort: 3000
+        - name: backend
+          image: chiragatcalfus/my-backend:latest
+          ports:
+            - containerPort: 5000
+          env:
+            - name: DB_HOST
+              value: "postgres.default.svc.cluster.local"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: "postgres"
+            - name: DB_USER
+              value: "postgres"
+            - name: DB_PASS
+              value: "psotgres"
